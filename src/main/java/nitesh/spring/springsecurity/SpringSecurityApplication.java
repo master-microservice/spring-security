@@ -1,5 +1,7 @@
 package nitesh.spring.springsecurity;
 
+import nitesh.spring.springsecurity.authentication.ApplicationUserPermission;
+import nitesh.spring.springsecurity.authentication.ApplicationUserRole;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
