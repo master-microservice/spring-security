@@ -1,23 +1,20 @@
-package nitesh.spring.springsecurity.authentication;
+package nitesh.spring.springsecurity.security;
 
+import nitesh.spring.springsecurity.auth.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 import java.util.concurrent.TimeUnit;
 
-import static nitesh.spring.springsecurity.authentication.ApplicationUserPermission.*;
-import static nitesh.spring.springsecurity.authentication.ApplicationUserRole.*;
+import static nitesh.spring.springsecurity.security.ApplicationUserRole.*;
 
 @Configuration
 @EnableWebSecurity
@@ -25,9 +22,12 @@ import static nitesh.spring.springsecurity.authentication.ApplicationUserRole.*;
 public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     private final PasswordEncoder passwordEncoder;
 
+    private final ApplicationUserService applicationUserService;
+
     @Autowired
-    public ApplicationSecurityConfig(PasswordEncoder passwordEncoder) {
+    public ApplicationSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService) {
         this.passwordEncoder = passwordEncoder;
+        this.applicationUserService = applicationUserService;
     }
 
     @Override
@@ -49,46 +49,25 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .defaultSuccessUrl("/courses", true)
                 .and()
                 .rememberMe().tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21))
-                .key("somethingverysecured");
+                .key("somethingverysecured")
+                .and()
+                .logout()
+                    .logoutUrl("/logout")
+                    .clearAuthentication(true)
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID", "remember-me")
+                    .logoutSuccessUrl("/login");
     }
 
     @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
+    }
     @Bean
-    protected UserDetailsService userDetailsService() {
-       UserDetails student = User.builder()
-               .username("student")
-               .password(passwordEncoder.encode("admin"))
-//               .roles(STUDENT.name())
-               .authorities(STUDENT.getAuthorities())
-               .build();
-
-       UserDetails admin = User.builder()
-               .username("admin")
-               .password(passwordEncoder.encode("admin"))
-//               .roles(ADMIN.name())
-               .authorities(ADMIN.getAuthorities())
-               .build();
-
-       UserDetails tom = User.builder()
-               .username("tom")
-               .password(passwordEncoder.encode("admin"))
-//               .roles(ADMINTRAINEE.name()) // ROLE_ADMINTRAINEE
-               .authorities(ADMINTRAINEE.getAuthorities())
-               .build();
-
-       UserDetails linda = User.builder()
-               .username("linda")
-               .password(passwordEncoder.encode("admin"))
-//               .roles(ADMIN.name())
-               .authorities(ADMIN.getAuthorities())
-               .build();
-
-
-       return new InMemoryUserDetailsManager(
-               admin,
-               student,
-               tom,
-               linda
-       );
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        var provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setUserDetailsService(applicationUserService);
+        return provider;
     }
 }

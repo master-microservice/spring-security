@@ -1,4 +1,4 @@
-package nitesh.spring.springsecurity.authentication;
+package nitesh.spring.springsecurity.security;
 
 public enum ApplicationUserPermission {
     STUDENT_READ("student:read"),

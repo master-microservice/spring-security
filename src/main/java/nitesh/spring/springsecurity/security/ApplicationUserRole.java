@@ -1,4 +1,4 @@
-package nitesh.spring.springsecurity.authentication;
+package nitesh.spring.springsecurity.security;
 
 import com.google.common.collect.Sets;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
