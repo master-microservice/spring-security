@@ -1,29 +1,45 @@
-package nitesh.spring.springsecurity.authentication;
+package nitesh.spring.springsecurity.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.sql.DataSource;
+
 @Configuration
 @EnableWebSecurity
-public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
+public class ApplicationSecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+    private final DataSource dataSource;
+
+    @Autowired
+    public ApplicationSecurityConfiguration(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("blah")
-                .password("blah")
-                .roles("USER")
-                .and()
-                .withUser("foo")
-                .password("foo")
-                .roles("ADMIN");
+        auth.jdbcAuthentication()
+                .dataSource(dataSource)
+                .withDefaultSchema()
+                .withUser(
+                        User.withUsername("user")
+                        .password("pass")
+                        .roles("USER")
+                )
+                .withUser(
+                        User.withUsername("admin")
+                        .password("pass")
+                        .roles("ADMIN")
+                );
+//        auth.authenticationProvider()
     }
 
     @Bean
